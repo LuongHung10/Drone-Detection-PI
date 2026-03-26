@@ -1,0 +1,12 @@
+env/
+
+AI-5/
+
+AI-6/video/
+AI-6/results/
+AI-6/YOLOv8/__pycache__/
+AI-6/YOLOv8/results/
+
+AI-7/
+
+finetune/
