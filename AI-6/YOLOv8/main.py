@@ -39,8 +39,14 @@ if cfg.USE_NCNN:
     model = YOLO(cfg.NCNN_MODEL_PATH)
     device = 'cpu'   # NCNN always runs on CPU
     print("✅ NCNN model loaded — running on CPU (ARM optimised)")
-    if logger:
-        logger.info(f"NCNN model loaded: {cfg.NCNN_MODEL_PATH}")
+    if not os.path.exists(ncnn_path):
+        print(f"⚠️  NCNN model not found at: {ncnn_path}")
+        print("   Export it first with:")
+        print("     yolo export model=best.pt format=ncnn opset=12")
+        print("   Then set NCNN_MODEL_PATH in config.py")
+        print("   Falling back to PyTorch model...")
+        cfg.USE_NCNN = False
+
 else:
     print(f"\n📦 Loading PyTorch model: {cfg.MODEL_PATH}")
     model = YOLO(cfg.MODEL_PATH)

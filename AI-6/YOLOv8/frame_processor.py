@@ -125,43 +125,33 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
     # ── Inference ────────────────────────────────────────────────────────────
     inf_start = time.time()
 
-    # if cfg.ENABLE_TRACKING and cfg.TRACKER_TYPE in ("bytetrack", "botsort", "hybrid"):
-    #     tracker_yaml = (
-    #         "botsort.yaml" if cfg.TRACKER_TYPE == "botsort" else "bytetrack.yaml"
-    #     )
-    #     results = model.track(
-    #         frame,
-    #         conf=conf,
-    #         iou=cfg.TRACK_IOU_THRESH,
-    #         imgsz=imgsz,
-    #         verbose=cfg.DEBUG_DETECTIONS,
-    #         device=device,
-    #         half=cfg.USE_HALF,
-    #         persist=True,
-    #         tracker=tracker_yaml,
-    #         show=False,
-    #         agnostic_nms=False,
-    #         max_det=max_det,
-    #         stream=False,
-    #     )
-    # else:
-    #     results = model.predict(
-    #         frame,
-    #         conf=conf,
-    #         iou=cfg.IOU_THRESH,
-    #         imgsz=imgsz,
-    #         verbose=cfg.DEBUG_DETECTIONS,
-    #         device=device,
-    #         half=cfg.USE_HALF,
-    #         show=False,
-    #         agnostic_nms=False,
-    #         max_det=max_det,
-    #         stream=False,
-    #     )
+    use_tracker = (
+        cfg.ENABLE_TRACKING
+        and cfg.TRACKER_TYPE in ("bytetrack", "botsort", "hybrid")
+        and not cfg.USE_NCNN
+    )
 
-    def _predict_fallback():
-        """Plain predict with no tracker."""
-        return model.predict(
+    if use_tracker:
+        tracker_yaml = (
+            "botsort.yaml" if cfg.TRACKER_TYPE == "botsort" else "bytetrack.yaml"
+        )
+        results = model.track(
+            frame,
+            conf=conf,
+            iou=cfg.TRACK_IOU_THRESH,
+            imgsz=imgsz,
+            verbose=cfg.DEBUG_DETECTIONS,
+            device=device,
+            half=cfg.USE_HALF,
+            persist=True,
+            tracker=tracker_yaml,
+            show=False,
+            agnostic_nms=False,
+            max_det=max_det,
+            stream=False,
+        )
+    else:
+        results = model.predict(
             frame,
             conf=conf,
             iou=cfg.IOU_THRESH,
@@ -172,43 +162,59 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
             show=False,
             agnostic_nms=False,
             max_det=max_det,
-            retina_masks=False,
             stream=False,
         )
+
+    # def _predict_fallback():
+    #     """Plain predict with no tracker."""
+    #     return model.predict(
+    #         frame,
+    #         conf=conf,
+    #         iou=cfg.IOU_THRESH,
+    #         imgsz=imgsz,
+    #         verbose=cfg.DEBUG_DETECTIONS,
+    #         device=device,
+    #         half=cfg.USE_HALF,
+    #         show=False,
+    #         agnostic_nms=False,
+    #         max_det=max_det,
+    #         retina_masks=False,
+    #         stream=False,
+    #     )
  
-    if cfg.ENABLE_TRACKING and cfg.TRACKER_TYPE in ("bytetrack", "botsort", "hybrid"):
-        tracker_yaml = (
-            "botsort.yaml" if cfg.TRACKER_TYPE == "botsort" else "bytetrack.yaml"
-        )
-        try:
-            results = model.track(
-                frame,
-                conf=conf,
-                iou=cfg.TRACK_IOU_THRESH,
-                imgsz=imgsz,
-                verbose=cfg.DEBUG_DETECTIONS,
-                device=device,
-                half=cfg.USE_HALF,
-                persist=True,
-                tracker=tracker_yaml,
-                show=False,
-                agnostic_nms=False,
-                max_det=max_det,
-                retina_masks=False,
-                stream=False,
-            )
-        except Exception as e:
-            # ByteTrack Kalman filter can go numerically unstable with NCNN
-            # Reset the tracker and fall back to plain predict for this frame
-            if logger:
-                logger.warning(f"Tracker error (resetting): {e}")
-            try:
-                model.predictor.trackers[0].reset()
-            except Exception:
-                pass
-            results = _predict_fallback()
-    else:
-        results = _predict_fallback()
+    # if cfg.ENABLE_TRACKING and cfg.TRACKER_TYPE in ("bytetrack", "botsort", "hybrid"):
+    #     tracker_yaml = (
+    #         "botsort.yaml" if cfg.TRACKER_TYPE == "botsort" else "bytetrack.yaml"
+    #     )
+    #     try:
+    #         results = model.track(
+    #             frame,
+    #             conf=conf,
+    #             iou=cfg.TRACK_IOU_THRESH,
+    #             imgsz=imgsz,
+    #             verbose=cfg.DEBUG_DETECTIONS,
+    #             device=device,
+    #             half=cfg.USE_HALF,
+    #             persist=True,
+    #             tracker=tracker_yaml,
+    #             show=False,
+    #             agnostic_nms=False,
+    #             max_det=max_det,
+    #             retina_masks=False,
+    #             stream=False,
+    #         )
+    #     except Exception as e:
+    #         # ByteTrack Kalman filter can go numerically unstable with NCNN
+    #         # Reset the tracker and fall back to plain predict for this frame
+    #         if logger:
+    #             logger.warning(f"Tracker error (resetting): {e}")
+    #         try:
+    #             model.predictor.trackers[0].reset()
+    #         except Exception:
+    #             pass
+    #         results = _predict_fallback()
+    # else:
+    #     results = _predict_fallback()
 
     inference_time = time.time() - inf_start
     post_start = time.time()
