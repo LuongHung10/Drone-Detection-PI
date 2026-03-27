@@ -125,6 +125,9 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
     # ── Inference ────────────────────────────────────────────────────────────
     inf_start = time.time()
 
+    if frame_count == 0:
+        print("NCNN OUTPUT NAMES:", model.model.net.output_names())
+
     use_tracker = (
         cfg.ENABLE_TRACKING
         and cfg.TRACKER_TYPE in ("bytetrack", "botsort", "hybrid")
