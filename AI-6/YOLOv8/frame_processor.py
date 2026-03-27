@@ -116,11 +116,11 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
     # ── Max detections cap (Pi 5 memory saving) ─────────────────────────────
     from hardware import IS_RASPBERRY_PI5, HAS_HAILO_NPU
     if IS_RASPBERRY_PI5 and not HAS_HAILO_NPU:
-        max_det = 150
+        max_det = 50
     elif IS_RASPBERRY_PI5 and HAS_HAILO_NPU:
-        max_det = 250
+        max_det = 150
     else:
-        max_det = 500
+        max_det = 250
 
     # ── Inference ────────────────────────────────────────────────────────────
     inf_start = time.time()
@@ -244,8 +244,21 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
         boxes_data = r.boxes.xyxy.cpu().numpy()
         confs_arr = r.boxes.conf.cpu().numpy()
         clss_arr = r.boxes.cls.cpu().numpy().astype(int)
+        # check finite
+        finite_mask = np.all(np.isfinite(boxes_data), axis=1)
 
-        valid_mask = np.all(np.isfinite(boxes_data), axis=1)
+        # compute width/height
+        w = boxes_data[:, 2] - boxes_data[:, 0]
+        h = boxes_data[:, 3] - boxes_data[:, 1]
+
+        # check valid size
+        size_mask = (w > 2) & (h > 2)
+
+        # combine
+        valid_mask = finite_mask & size_mask
+
+        # valid_mask = np.all(np.isfinite(boxes_data), axis=1)
+
         if not np.all(valid_mask):
             boxes_data = boxes_data[valid_mask]
             confs_arr  = confs_arr[valid_mask]
@@ -391,6 +404,13 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
         for box, conf_val, cls, t in zip(_boxes, _confs, _clss, _tids_raw):
             if not np.all(np.isfinite(box)):
                 continue
+
+            x1, y1, x2, y2 = box
+            w, h = x2 - x1, y2 - y1
+
+            if w <= 2 or h <= 2:
+                continue        
+                
             targeting_dets.append({
                 'box':   tuple(map(int, box)),
                 'label': names[cls],
