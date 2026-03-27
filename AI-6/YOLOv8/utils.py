@@ -49,50 +49,50 @@ def reset_state():
 # =====================================================
 # KALMAN FILTER
 # =====================================================
-def create_kalman_filter(x: float, y: float, w: float, h: float):
-    """Create a Kalman Filter for a new track. Returns None if filterpy missing."""
-    if not KALMAN_AVAILABLE or not cfg.USE_KALMAN_FILTER:
-        return None
+# def create_kalman_filter(x: float, y: float, w: float, h: float):
+#     """Create a Kalman Filter for a new track. Returns None if filterpy missing."""
+#     if not KALMAN_AVAILABLE or not cfg.USE_KALMAN_FILTER:
+#         return None
 
-    kf = KalmanFilter(dim_x=8, dim_z=4)
+#     kf = KalmanFilter(dim_x=8, dim_z=4)
 
-    # State: [x, y, w, h, vx, vy, vw, vh]
-    kf.x = np.array([x, y, w, h, 0, 0, 0, 0], dtype=np.float32)
+#     # State: [x, y, w, h, vx, vy, vw, vh]
+#     kf.x = np.array([x, y, w, h, 0, 0, 0, 0], dtype=np.float32)
 
-    # Constant-velocity transition
-    kf.F = np.array([
-        [1, 0, 0, 0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0, 0, 1, 0],
-        [0, 0, 0, 1, 0, 0, 0, 1],
-        [0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1],
-    ], dtype=np.float32)
+#     # Constant-velocity transition
+#     kf.F = np.array([
+#         [1, 0, 0, 0, 1, 0, 0, 0],
+#         [0, 1, 0, 0, 0, 1, 0, 0],
+#         [0, 0, 1, 0, 0, 0, 1, 0],
+#         [0, 0, 0, 1, 0, 0, 0, 1],
+#         [0, 0, 0, 0, 1, 0, 0, 0],
+#         [0, 0, 0, 0, 0, 1, 0, 0],
+#         [0, 0, 0, 0, 0, 0, 1, 0],
+#         [0, 0, 0, 0, 0, 0, 0, 1],
+#     ], dtype=np.float32)
 
-    # Measurement: observe x, y, w, h only
-    kf.H = np.zeros((4, 8), dtype=np.float32)
-    for i in range(4):
-        kf.H[i, i] = 1.0
+#     # Measurement: observe x, y, w, h only
+#     kf.H = np.zeros((4, 8), dtype=np.float32)
+#     for i in range(4):
+#         kf.H[i, i] = 1.0
 
-    kf.P *= 1000.0
-    kf.R = np.eye(4, dtype=np.float32) * cfg.KALMAN_MEASUREMENT_NOISE
-    kf.Q = np.eye(8, dtype=np.float32) * cfg.KALMAN_PROCESS_NOISE
+#     kf.P *= 1000.0
+#     kf.R = np.eye(4, dtype=np.float32) * cfg.KALMAN_MEASUREMENT_NOISE
+#     kf.Q = np.eye(8, dtype=np.float32) * cfg.KALMAN_PROCESS_NOISE
 
-    return kf
+#     return kf
 
 
-def update_kalman_filter(kf, x: float, y: float, w: float, h: float) -> np.ndarray:
-    """
-    Predict + update a Kalman Filter with a new measurement.
-    Returns the smoothed [x, y, w, h].
-    """
-    if kf is None or not KALMAN_AVAILABLE:
-        return np.array([x, y, w, h], dtype=np.float32)
-    kf.predict()
-    kf.update(np.array([x, y, w, h], dtype=np.float32))
-    return kf.x[:4]
+# def update_kalman_filter(kf, x: float, y: float, w: float, h: float) -> np.ndarray:
+#     """
+#     Predict + update a Kalman Filter with a new measurement.
+#     Returns the smoothed [x, y, w, h].
+#     """
+#     if kf is None or not KALMAN_AVAILABLE:
+#         return np.array([x, y, w, h], dtype=np.float32)
+#     kf.predict()
+#     kf.update(np.array([x, y, w, h], dtype=np.float32))
+#     return kf.x[:4]
 
 
 # =====================================================

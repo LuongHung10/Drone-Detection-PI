@@ -87,13 +87,23 @@ MULTI_SCALE_THRESHOLD = 2
 MULTI_SCALE_FRAME_INTERVAL = 3
 
 # =====================================================
+# NCNN INFERENCE
+# =====================================================
+USE_NCNN = False             # Set True to use NCNN instead of PyTorch
+# NCNN model path — export first:
+#   yolo export model=best.pt format=ncnn opset=12
+#   This creates a folder: best_ncnn_model/
+NCNN_MODEL_PATH = "../weights/best_ncnn_model"
+
+# =====================================================
 # FRAME SKIPPING
 # =====================================================
-USE_SMART_SKIP = False
-SKIP_THRESHOLD_STABLE = 0.98
-MAX_SKIP_FRAMES = 0
-SKIP_ON_NO_DETECTIONS = False
-SKIP_CONSECUTIVE_NO_DET = 10
+USE_FRAME_SKIP = True    
+FRAME_SKIP_N   = 3
+# SKIP_THRESHOLD_STABLE = 0.98
+# MAX_SKIP_FRAMES = 0
+# SKIP_ON_NO_DETECTIONS = False
+# SKIP_CONSECUTIVE_NO_DET = 10
 
 # =====================================================
 # ADVANCED OPTIMIZATIONS

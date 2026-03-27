@@ -7,7 +7,6 @@ torch>=2.0.0
 torchvision>=0.15.0
 scipy>=1.10.0
 filterpy>=1.4.5
-
 # For Pi 5 optimization
 Pillow>=10.0.0
 

@@ -82,6 +82,10 @@ def apply_hardware_overrides():
             cfg.MAX_AGE = 20
             cfg.SMOOTHING_HISTORY = 2
             cfg.ENABLE_MEMORY_OPTIMIZATION = True
+            cfg.ENABLE_MEMORY_OPTIMIZATION = True
+            cfg.USE_NCNN       = True    # Auto-enable NCNN on Pi 5 CPU
+            cfg.USE_FRAME_SKIP = True
+            cfg.FRAME_SKIP_N   = 2
             print("⚙️  Config optimized for Pi 5 CPU (no NPU)")
 
         if SYSTEM_MEMORY_GB and SYSTEM_MEMORY_GB < 4:

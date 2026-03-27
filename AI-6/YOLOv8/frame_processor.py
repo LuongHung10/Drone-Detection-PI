@@ -26,6 +26,7 @@ tracking_history: dict = {}
 # kalman_filters: dict = {}
 occluded_tracks: dict = {}
 last_frame_results: dict | None = None
+last_annotated_frame = None 
 skip_frame_counter: int = 0
 tracking_stability: dict = {}
 
@@ -34,11 +35,13 @@ def reset_state():
     """Clear all per-video tracking state. Call before processing each new video."""
     global tracking_history #, kalman_filters
     global occluded_tracks, last_frame_results, skip_frame_counter, tracking_stability
+    global last_annotated_frame
 
     tracking_history.clear()
     # kalman_filters.clear()
     occluded_tracks.clear()
     last_frame_results = None
+    last_annotated_frame = None
     skip_frame_counter = 0
     tracking_stability.clear()
 
@@ -63,6 +66,21 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
     global occluded_tracks, last_frame_results, skip_frame_counter, tracking_stability
 
     frame_start = time.time()
+
+    # Skip frames when locked to save CPU (but still run tracking updates internally)
+    if (cfg.USE_FRAME_SKIP
+            and not is_locked()
+            and frame_count % cfg.FRAME_SKIP_N != 0
+            and last_annotated_frame is not None):
+        # ByteTrack continues to predict positions internally between detections
+        return last_annotated_frame, {
+            'detection_count': 0,
+            'track_count': 0,
+            'class_counts': {},
+            'track_ids': [],
+            'inference_time_ms': 0,
+            'total_time_ms': (time.time() - frame_start) * 1000,
+        }
 
     # ── Adaptive confidence ──────────────────────────────────────────────────
     conf = cfg.CONF_THRESH
