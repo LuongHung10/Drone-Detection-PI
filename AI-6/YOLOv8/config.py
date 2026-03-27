@@ -6,7 +6,7 @@ import logging
 # =====================================================
 # PATHS
 # =====================================================
-MODEL_PATH = "../weights/best3.pt"
+MODEL_PATH = "../weights/best_ncnn_model"
 VIDEO_PATH = "../video"
 OUTPUT_DIR = "../results"
 

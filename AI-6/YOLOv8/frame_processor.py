@@ -116,11 +116,11 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
     # ── Max detections cap (Pi 5 memory saving) ─────────────────────────────
     from hardware import IS_RASPBERRY_PI5, HAS_HAILO_NPU
     if IS_RASPBERRY_PI5 and not HAS_HAILO_NPU:
-        max_det = 50
+        max_det = 10
     elif IS_RASPBERRY_PI5 and HAS_HAILO_NPU:
-        max_det = 150
+        max_det = 50    
     else:
-        max_det = 250
+        max_det = 100
 
     # ── Inference ────────────────────────────────────────────────────────────
     inf_start = time.time()
@@ -164,6 +164,13 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
             max_det=max_det,
             stream=False,
         )
+
+    r = results[0]
+
+    print("SHAPE:", r.boxes.data.shape)
+    print("DATA:", r.boxes.data[:5])
+    print("CONF:", r.boxes.conf[:5])
+    print("CLS :", r.boxes.cls[:5])
 
     # def _predict_fallback():
     #     """Plain predict with no tracker."""
