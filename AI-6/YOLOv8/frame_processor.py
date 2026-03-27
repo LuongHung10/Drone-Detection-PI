@@ -239,6 +239,16 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
         confs_arr = r.boxes.conf.cpu().numpy()
         clss_arr = r.boxes.cls.cpu().numpy().astype(int)
 
+        valid_mask = np.all(np.isfinite(boxes_data), axis=1)
+        if not np.all(valid_mask):
+            boxes_data = boxes_data[valid_mask]
+            confs_arr  = confs_arr[valid_mask]
+            clss_arr   = clss_arr[valid_mask]
+            if track_ids is not None:
+                track_ids = track_ids[valid_mask[:len(track_ids)]]
+        if len(boxes_data) == 0:
+            continue
+
         # KCF hybrid update
         # if cfg.TRACKER_TYPE == "hybrid" and track_ids is not None:
         #     _update_kcf_trackers(frame, boxes_data, track_ids)
@@ -367,13 +377,14 @@ def process_frame(model, device: str, frame, frame_count: int = 0,
     for r in results:
         if r.boxes is None or len(r.boxes) == 0:
             continue
-        tids = r.boxes.id.cpu().numpy().astype(int) if r.boxes.id is not None else [None] * len(r.boxes)
-        for box, conf_val, cls, t in zip(
-            r.boxes.xyxy.cpu().numpy(),
-            r.boxes.conf.cpu().numpy(),
-            r.boxes.cls.cpu().numpy().astype(int),
-            tids,
-        ):
+        _boxes = r.boxes.xyxy.cpu().numpy()
+        _confs = r.boxes.conf.cpu().numpy()
+        _clss  = r.boxes.cls.cpu().numpy().astype(int)
+        _tids_raw = r.boxes.id.cpu().numpy().astype(int) if r.boxes.id is not None else [None] * len(_boxes)
+        # tids = r.boxes.id.cpu().numpy().astype(int) if r.boxes.id is not None else [None] * len(r.boxes)
+        for box, conf_val, cls, t in zip(_boxes, _confs, _clss, _tids_raw):
+            if not np.all(np.isfinite(box)):
+                continue
             targeting_dets.append({
                 'box':   tuple(map(int, box)),
                 'label': names[cls],
